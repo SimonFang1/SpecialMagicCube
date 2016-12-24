@@ -7,7 +7,7 @@
 #include <ext/hash_set>
 
 using namespace std;
-using namespace __gnu_cxx;
+using __gnu_cxx::hash_set;
 
 struct my_hash {
     size_t operator()(const string& s) const {
@@ -24,7 +24,6 @@ struct my_equal_to {
     }
 };
 
-
 struct State {
 	string state;
 	vector<int> path;
@@ -34,15 +33,12 @@ struct State {
 	}
 };
 
-
 class MagicCube {
 private:
-	string state;
 	string initial;
 	State _state;
 	string followState[12];
 	list<State> fringe;
-	vector<int> path;
 	hash_set<string, my_hash, my_equal_to> visited;
 	int permumation[81] = {
 	-1, -1, -1, 9,  10, 11, -1, -1, -1,
@@ -57,6 +53,7 @@ private:
 	};
 
 	bool satisfy() {
+		const string &state = _state.state;
 		char color = state[0];
 		for (int i = 1; i < 9; i++) {
 			if (color != state[i])
@@ -67,7 +64,7 @@ private:
 
 	void getFollowStates() {
 		for (int i = 0; i < 12; i++) {
-			followState[i] = state;
+			followState[i] = _state.state;
 		}
 		Col1Up(followState[0]);
 		Col1Down(followState[1]);
@@ -103,7 +100,7 @@ private:
 		for (int i = 0; i < 4; i++)
 			if (max < count[i])
 				max = count[i];
-		return max;
+		return 9 - max;
 	}
 
 	void insertNode(State s) {
@@ -112,7 +109,7 @@ private:
 			return;
 		}
 		for (list<State>::iterator it = fringe.begin(); it != fringe.end(); it++) {
-			if (s.moves() + 9 - s.estiVal <= it->moves() + 9 - it->estiVal) {
+			if (s.moves() + s.estiVal <= it->moves() + it->estiVal) {
 				fringe.insert(it, s);
 				return;
 			}
@@ -144,24 +141,21 @@ public:
 		input.close();
 		for (int i = 0; i < 45; i++)
 			initial += s[i];
-		State sta;
-		sta.state = initial;
-		sta.path = vector<int>();
-		sta.estiVal = getEstimateValue(sta.state);
-		fringe.push_back(sta);
 		return true;
 	}
 	
 	bool Asolve() {
 		bool isCompleted = false;
+		_state.state = initial;
+		_state.path = vector<int>();
+		_state.estiVal = getEstimateValue(initial);
+		fringe.push_back(_state);
 		int totalTime = 100000;
 		for (int i = 0; i < totalTime; i++) {
 			_state = *fringe.begin();
 			fringe.erase(fringe.begin());
-			state = _state.state;
-			path = _state.path;
 			cout << "times: " << i << '\t' << "steps:" << _state.moves() << endl;
-			printState(state);
+			printState(_state.state);
 			if (satisfy()) {
 				isCompleted = true;
 				break;
@@ -171,7 +165,7 @@ public:
 				if (followState[i] != "") {
 					State s;
 					s.state = followState[i];
-					s.path = path;
+					s.path = _state.path;
 					s.path.push_back(i);
 					s.estiVal = getEstimateValue(s.state);
 					insertNode(s);
@@ -181,7 +175,7 @@ public:
 		}
 		return isCompleted;
 	}
-	
+
 	void printState(const string& s) {
 		int *p = permumation;
 		for (int i = 0; i < 81; i++) {
@@ -307,6 +301,7 @@ public:
 			"Row 3 Left",
 			"Row 3 Right"
 		};
+		const vector<int> &path = _state.path;
 		cout << "total steps: " << path.size() << endl;
 		for (int i = 0; i < path.size(); i++) {
 			cout << pathMap[path[i]] << endl;
@@ -327,8 +322,8 @@ public:
 // }
 
 int main() {
-	MagicCube mc;
 	freopen("output.txt", "w", stdout);
+	MagicCube mc;
 	mc.readProblem("input.txt");
 	if (mc.Asolve())
 		mc.printPath();
