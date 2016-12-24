@@ -4,7 +4,7 @@
 #include <list>
 #include <fstream>
 
-#include <ext/hash_map>
+#include <ext/hash_set>
 
 using namespace std;
 using namespace __gnu_cxx;
@@ -43,7 +43,7 @@ private:
 	string followState[12];
 	list<State> fringe;
 	vector<int> path;
-	hash_map<string, bool, my_hash, my_equal_to> visited;
+	hash_set<string, my_hash, my_equal_to> visited;
 	int permumation[81] = {
 	-1, -1, -1, 9,  10, 11, -1, -1, -1,
 	-1, -1, -1, 12, 13, 14, -1, -1, -1,
@@ -55,9 +55,42 @@ private:
 	-1, -1, -1, 39, 40, 41, -1, -1, -1,
 	-1, -1, -1, 42, 43, 44, -1, -1, -1
 	};
+
+	bool satisfy() {
+		char color = state[0];
+		for (int i = 1; i < 9; i++) {
+			if (color != state[i])
+				return false;
+		}
+		return true;
+	}
+
+	void getFollowStates() {
+		for (int i = 0; i < 12; i++) {
+			followState[i] = state;
+		}
+		Col1Up(followState[0]);
+		Col1Down(followState[1]);
+		Col2Up(followState[2]);
+		Col2Down(followState[3]);
+		Col3Up(followState[4]);
+		Col3Down(followState[5]);
+		Row1Left(followState[6]);
+		Row1Right(followState[7]);
+		Row2Left(followState[8]);
+		Row2Right(followState[9]);
+		Row3Left(followState[10]);
+		Row3Right(followState[11]);
+		for (int i = 0; i < 12; i++) {
+			if (visited.find(followState[i]) != visited.end()) {
+				followState[i] = "";
+			}
+		}
+	}
+
 	int getEstimateValue(string t) {
-		int count[4]={0,0,0,0}, max =-1;
-		for (int i =0; i <9; i++) {
+		int count[4] = {0,0,0,0}, max =-1;
+		for (int i =0; i < 9; i++) {
 			if (t[i] == 'b')
 				count[0]++;
 			else if (t[i] =='g')
@@ -67,16 +100,27 @@ private:
 			else
 				count[3]++;
 		}
-		for (int i =0; i <4; i++)
+		for (int i = 0; i < 4; i++)
 			if (max < count[i])
 				max = count[i];
 		return max;
 	}
-public:
-	MagicCube() {
-	// 	state.reserve(46);
-	// 	state[45] = '\0';
+
+	void insertNode(State s) {
+		if (fringe.empty()) {
+			fringe.push_back(s);
+			return;
+		}
+		for (list<State>::iterator it = fringe.begin(); it != fringe.end(); it++) {
+			if (s.moves() + 9 - s.estiVal <= it->moves() + 9 - it->estiVal) {
+				fringe.insert(it, s);
+				return;
+			}
+		}
+		fringe.push_back(s);
 	}
+
+public:
 	bool readProblem(const char* filename) {
 		ifstream input(filename);
 		if (!input.is_open()) {
@@ -97,32 +141,17 @@ public:
 			cerr << "read error occurred" << endl;
 			return false;
 		}
-		// for (int i = 0; i < 45; i++) {
-		// 	cout << state[i];
-		// }
-		// cout << endl;
 		input.close();
-		// print(s, 45);
 		for (int i = 0; i < 45; i++)
-			state += s[i];
-		// cout << state;
+			initial += s[i];
 		State sta;
-		sta.state = state;
+		sta.state = initial;
 		sta.path = vector<int>();
 		sta.estiVal = getEstimateValue(sta.state);
 		fringe.push_back(sta);
-		initial = state;
-		return true;
-	};
-	bool satisfy() {
-		char color = state[0];
-		for (int i = 1; i < 9; i++) {
-			if (color != state[i])
-				return false;
-		}
 		return true;
 	}
-
+	
 	bool Asolve() {
 		bool isCompleted = false;
 		int totalTime = 100000;
@@ -133,10 +162,8 @@ public:
 			path = _state.path;
 			cout << "times: " << i << '\t' << "steps:" << _state.moves() << endl;
 			printState(state);
-
 			if (satisfy()) {
 				isCompleted = true;
-				
 				break;
 			}
 			getFollowStates();
@@ -148,34 +175,13 @@ public:
 					s.path.push_back(i);
 					s.estiVal = getEstimateValue(s.state);
 					insertNode(s);
-					visited.insert(make_pair(followState[i], true));
+					visited.insert(followState[i]);
 				}
 			}
 		}
 		return isCompleted;
 	}
-
-	void insertNode(State s) {
-		if (fringe.empty()) {
-			fringe.push_back(s);
-			return;
-		}
-		for (list<State>::iterator it = fringe.begin(); it != fringe.end(); it++) {
-			if (s.moves() + 9 - s.estiVal <= it->moves() + 9 - it->estiVal) {
-				fringe.insert(it, s);
-				return;
-			}
-		}
-		fringe.push_back(s);
-	}
-
-
-	static void print(const char *a, int n) {
-		for (int i = 0; i < n; i++) {
-			cout << a[i];
-		}
-		cout << endl;
-	}
+	
 	void printState(const string& s) {
 		int *p = permumation;
 		for (int i = 0; i < 81; i++) {
@@ -188,6 +194,7 @@ public:
 		}
 		cout << endl;
 	}
+
 	void Col1Up(string & s) {
 		int *p = permumation;
 		char tmp = s[p[0*9 + 3]];
@@ -285,29 +292,6 @@ public:
 		s[p[5*9+0]] = tmp;
 	}
 
-	void getFollowStates() {
-		for (int i = 0; i < 12; i++) {
-			followState[i] = state;
-		}
-		Col1Up(followState[0]);
-		Col1Down(followState[1]);
-		Col2Up(followState[2]);
-		Col2Down(followState[3]);
-		Col3Up(followState[4]);
-		Col3Down(followState[5]);
-		Row1Left(followState[6]);
-		Row1Right(followState[7]);
-		Row2Left(followState[8]);
-		Row2Right(followState[9]);
-		Row3Left(followState[10]);
-		Row3Right(followState[11]);
-		for (int i = 0; i < 12; i++) {
-			if (visited.find(followState[i]) != visited.end()) {
-				followState[i] = "";
-			}
-		}
-	}
-
 	void printPath() const {
 		string pathMap[12] = {
 			"Col 1 Up",
@@ -330,21 +314,17 @@ public:
 	}
 };
 
-void test() {
-	MagicCube mc;
-	string state("123456789abcdefghiABCDEFGHIjklmnopqrJKLMNOPQR");
-	mc.printState(state);
-	cout << '\n';
-	mc.Col1Up(state);
-	mc.printState(state);
-	cout << '\n';
-	mc.Col2Up(state);
-	mc.printState(state);
-	cout << '\n';
-	mc.Col3Down(state);
-	mc.printState(state);
-	cout << '\n';
-}
+// void test() {
+// 	MagicCube mc;
+// 	string state("123456789abcdefghiABCDEFGHIjklmnopqrJKLMNOPQR");
+// 	mc.printState(state);
+// 	mc.Col1Up(state);
+// 	mc.printState(state);
+// 	mc.Col2Up(state);
+// 	mc.printState(state);
+// 	mc.Col3Down(state);
+// 	mc.printState(state);
+// }
 
 int main() {
 	MagicCube mc;
