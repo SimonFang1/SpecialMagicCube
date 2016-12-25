@@ -109,7 +109,7 @@ private:
 			return;
 		}
 		for (list<State>::iterator it = fringe.begin(); it != fringe.end(); it++) {
-			if (s.moves() + s.estiVal <= it->moves() + it->estiVal) {
+			if (s.moves() + 2*s.estiVal <= it->moves() + 2*it->estiVal) {
 				fringe.insert(it, s);
 				return;
 			}
