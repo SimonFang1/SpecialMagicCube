@@ -154,8 +154,8 @@ public:
 		for (int i = 0; i < totalTime; i++) {
 			_state = *fringe.begin();
 			fringe.erase(fringe.begin());
-			cout << "times: " << i << '\t' << "steps:" << _state.moves() << endl;
-			printState(_state.state);
+			cout << "searched: " << i << '\t' << "steps:" << _state.moves() << endl;
+			printState(_state);
 			if (satisfy()) {
 				isCompleted = true;
 				break;
@@ -187,6 +187,28 @@ public:
 			if (i % 9 == 8) cout << '\n';
 		}
 		cout << endl;
+	}
+
+	void printState(const State& s) {
+		string pathInfo[12] = {
+			"C1U",
+			"C1D",
+			"C2U",
+			"C2D",
+			"C3U",
+			"C3D",
+			"R1L",
+			"R1R",
+			"R2L",
+			"R2R",
+			"R3L",
+			"R3R"
+		};
+		const vector<int> &path = s.path;
+		for (int i = 0; i < path.size(); i++) {
+			cout << pathInfo[path[i]] << (i == path.size() - 1 ? "\n" : " -> ");
+		}
+		printState(s.state);
 	}
 
 	void Col1Up(string & s) {
@@ -287,7 +309,7 @@ public:
 	}
 
 	void printPath() const {
-		string pathMap[12] = {
+		string pathInfo[12] = {
 			"Col 1 Up",
 			"Col 1 Down",
 			"Col 2 Up",
@@ -304,7 +326,7 @@ public:
 		const vector<int> &path = _state.path;
 		cout << "total steps: " << path.size() << endl;
 		for (int i = 0; i < path.size(); i++) {
-			cout << pathMap[path[i]] << endl;
+			cout << pathInfo[path[i]] << endl;
 		}
 	}
 };
