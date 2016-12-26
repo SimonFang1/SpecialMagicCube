@@ -13,7 +13,7 @@ struct my_hash {
     size_t operator()(const string& s) const {
     	unsigned long sum = 0;
     	for (int i = 0; i < s.size(); i++) {
-    		sum += s[i];
+    		sum += s[i] * i;
     	}
         return sum % (1UL << sizeof(size_t));
     }
